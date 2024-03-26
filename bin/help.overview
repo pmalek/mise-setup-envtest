@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+echo "mise-setup-envtest is a mise plugin to install, download or compile setup-envtest."

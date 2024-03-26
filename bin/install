@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+set -o errexit
+set -o nounset
+set -o pipefail
+
+if [[ "$ASDF_INSTALL_TYPE" == "version" ]]; then
+  ASDF_INSTALL_VERSION="v${ASDF_INSTALL_VERSION}"
+fi
+
+# Below check prevents:
+# cannot install, GOBIN must be an absolute path
+export GOBIN="${ASDF_INSTALL_PATH}/bin"
+if [[ ! "${GOBIN}" = /* ]]; then
+  export GOBIN="$(readlink -f ${ASDF_INSTALL_PATH})/bin"
+fi
+
+DIR=$(mktemp -d) && cd "${DIR}"
+
+# https://github.com/kubernetes-sigs/controller-runtime/issues/2646
+
+echo "module main
+
+go 1.21
+
+require sigs.k8s.io/controller-runtime ${ASDF_INSTALL_VERSION}" > go.mod
+
+echo "package main
+
+import _ \"sigs.k8s.io/controller-runtime/tools/setup-envtest\"
+
+func main() {}" > main.go
+
+go mod tidy
+go install sigs.k8s.io/controller-runtime/tools/setup-envtest
